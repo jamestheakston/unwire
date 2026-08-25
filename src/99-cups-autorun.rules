@@ -1,0 +1,13 @@
+# Unwire - udev rule
+#
+# Triggers automatic CUPS queue creation and AirPrint broadcast whenever
+# a USB device with the Printer interface class (0x07) is added.
+#
+# Runs asynchronously via systemd-run so udev's event processing is never
+# blocked while lpinfo/lpadmin/avahi work happens.
+
+ACTION=="add", SUBSYSTEM=="usb", ATTR{bInterfaceClass}=="07", \
+  RUN+="/bin/systemd-run --no-block /usr/local/bin/cups-auto-add.sh"
+
+ACTION=="add", SUBSYSTEM=="usb", ENV{ID_USB_INTERFACES}=="*:0701??:*", \
+  RUN+="/bin/systemd-run --no-block /usr/local/bin/cups-auto-add.sh"
