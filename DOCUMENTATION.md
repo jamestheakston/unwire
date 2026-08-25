@@ -13,13 +13,14 @@ Complete reference for installing, operating, and troubleshooting Unwire.
 7. [Accessing CUPS Administration](#7-accessing-cups-administration)
 8. [Printing From Your Devices](#8-printing-from-your-devices)
 9. [Supported Printers & Drivers](#9-supported-printers--drivers)
-10. [Manually Configuring a Driver (Unsupported Printers)](#10-manually-configuring-a-driver-unsupported-printers)
-11. [How Automatic Printer Detection Works](#11-how-automatic-printer-detection-works)
-12. [Networking Requirements (.local / mDNS)](#12-networking-requirements-local--mdns)
-13. [Logs & Diagnostics](#13-logs--diagnostics)
-14. [Troubleshooting](#14-troubleshooting)
-15. [Uninstalling](#15-uninstalling)
-16. [License](#16-license)
+10. [Known Driver Limitations](#10-known-driver-limitations)
+11. [Manually Configuring a Driver (Unsupported Printers)](#11-manually-configuring-a-driver-unsupported-printers)
+12. [How Automatic Printer Detection Works](#12-how-automatic-printer-detection-works)
+13. [Networking Requirements (.local / mDNS)](#13-networking-requirements-local--mdns)
+14. [Logs & Diagnostics](#14-logs--diagnostics)
+15. [Troubleshooting](#15-troubleshooting)
+16. [Uninstalling](#16-uninstalling)
+17. [License](#17-license)
 
 ---
 
@@ -76,7 +77,7 @@ This one command:
 6. Runs an initial scan to pick up any printer already plugged in.
 7. Prints a summary with the dashboard URL, admin URL, and local IP.
 
-No further steps are required — printers plugged in after installation are detected automatically (see [Section 11](#11-how-automatic-printer-detection-works)).
+No further steps are required — printers plugged in after installation are detected automatically (see [Section 12](#12-how-automatic-printer-detection-works)).
 
 ---
 
@@ -120,7 +121,7 @@ From here you can:
 - Add, remove, or modify printers manually.
 - View and manage the print queue and job history.
 - Change printer settings (paper size, duplex, quality, etc.).
-- Manually assign a specific driver/PPD to a printer (see [Section 10](#10-manually-configuring-a-driver-unsupported-printers)).
+- Manually assign a specific driver/PPD to a printer (see [Section 11](#11-manually-configuring-a-driver-unsupported-printers)).
 
 ---
 
@@ -152,15 +153,29 @@ Unwire installs several driver packages during setup to cover as many printers a
 When a printer is detected, `cups-auto-add.sh` tries these in order:
 
 1. **IPP Everywhere** (driverless) — works for most modern printers regardless of brand.
-2. **A matching driver name** found by searching `lpinfo -m` output against the printer's manufacturer/model string.
+2. **A brand-aware driver match** — the script recognizes the printer's manufacturer (HP, Brother, Samsung/Xerox/Dell, Epson, Canon) and searches `lpinfo -m` for that brand's own dedicated driver package first (e.g. `brlaser` for Brother, `splix` for Samsung), before falling back to a generic text match on the model name. This avoids picking a lower-quality or non-functional driver when multiple packages offer a PPD for the same printer — see [Section 10](#10-known-driver-limitations) for why this matters.
 3. **A generic Gutenprint queue** as a broader fallback.
 4. **A raw queue** as the last resort, with no format conversion — this often produces garbled or no output for printers using a proprietary command language.
 
-**A note on older Samsung SPL printers:** some models (for example, the Samsung ML-1665) are not on SpliX's officially supported list even though the package is installed. These printers may land in the raw-queue fallback rather than being configured correctly. If a Samsung laser prints garbled output or nothing at all, this is the most likely cause — see [Section 10](#10-manually-configuring-a-driver-unsupported-printers) for the fix, and check [OpenPrinting's SpliX page](https://www.openprinting.org/driver/SpliX/) for your specific model's support status.
+**A note on older Samsung SPL printers:** some models (for example, the Samsung ML-1665) are not on SpliX's officially supported list even though the package is installed. These printers may land in the raw-queue fallback rather than being configured correctly. If a Samsung laser prints garbled output or nothing at all, this is the most likely cause — see [Section 11](#11-manually-configuring-a-driver-unsupported-printers) for the fix, and check [OpenPrinting's SpliX page](https://www.openprinting.org/driver/SpliX/) for your specific model's support status.
 
 ---
 
-## 10. Manually Configuring a Driver (Unsupported Printers)
+## 10. Known Driver Limitations
+
+Unwire installs five overlapping driver sources side by side (CUPS's built-in IPP Everywhere/PostScript support, `printer-driver-gutenprint`, `hplip`, `brlaser`, and `printer-driver-splix`) to maximize the number of printers that work automatically. This combination is common and well-supported — these packages install cleanly together with no file conflicts — but a few known quirks are worth understanding:
+
+**More than one driver can claim the same printer.** Samsung and Xerox printers in particular can be matched by both `splix` and CUPS's generic PostScript support, since many Samsung printers support PostScript natively. `cups-auto-add.sh`'s brand-aware matching (see [Section 9](#9-supported-printers--drivers)) reduces the chance of picking a worse option, but it isn't a guarantee of the single best driver in every case — manual configuration (see [Section 11](#11-manually-configuring-a-driver-unsupported-printers)) is always available as a fallback.
+
+**HPLIP sometimes requires a proprietary plugin that isn't installed.** Some HP printers — particularly those with fax support, or certain laser models — need a proprietary binary plugin distributed separately from the open-source `hplip` package. When `cups-auto-add.sh` encounters a driver entry that `lpinfo -m` marks as requiring this plugin, it skips that entry and tries the next candidate rather than configuring a queue that will never actually produce output. In practice, this usually means an affected HP printer will fall through to the Gutenprint or raw fallback instead of using HPLIP, and may need manual configuration to work correctly.
+
+**HPLIP driver names have changed across versions.** Older HPLIP setups used an `hpijs` driver that was removed in later versions in favor of `hpcups`. This is handled automatically by installing the driver by name at setup time (which always picks up whatever the installed HPLIP version currently provides), but it's worth knowing about if you're troubleshooting a discrepancy between documentation you find online and what `lpinfo -m` shows on your system.
+
+**None of this is a package-manager conflict.** All five driver sources coexist on disk without overwriting each other's files or requiring exclusive installation — the issues above are about CUPS having multiple *candidate* drivers to choose from for a given printer, not about the packages themselves being incompatible.
+
+---
+
+## 11. Manually Configuring a Driver (Unsupported Printers)
 
 If a printer isn't automatically configured correctly — garbled output, blank pages, or no printing at all — you can manually assign a driver through the CUPS admin interface. CUPS supports this natively; Unwire doesn't need to add anything extra for this to work.
 
@@ -186,7 +201,7 @@ Unwire's background scanner (`cups-auto-add.sh`) re-checks connected printers ev
 
 ---
 
-## 11. How Automatic Printer Detection Works
+## 12. How Automatic Printer Detection Works
 
 Unwire detects printers through two independent mechanisms that work together:
 
@@ -197,7 +212,7 @@ Both mechanisms call the same script and are safe to run concurrently — a lock
 
 ---
 
-## 12. Networking Requirements (.local / mDNS)
+## 13. Networking Requirements (.local / mDNS)
 
 The `unwire.local` and `admin.unwire.local` addresses rely on **mDNS (multicast DNS)**, also known as Bonjour, to resolve on your local network. This only works within your local network — it is never reachable over the internet or from a different network.
 
@@ -212,7 +227,7 @@ If `.local` addresses aren't resolving, try the Pi's raw IP address for the dash
 
 ---
 
-## 13. Logs & Diagnostics
+## 14. Logs & Diagnostics
 
 | What | Where |
 |---|---|
@@ -244,7 +259,7 @@ sudo /usr/local/bin/update-printer-webpage.sh
 
 ---
 
-## 14. Troubleshooting
+## 15. Troubleshooting
 
 **A printer doesn't appear on the dashboard or in the AirPrint picker at all.**
 - Confirm the printer is powered on and the USB cable is fully connected.
@@ -253,7 +268,7 @@ sudo /usr/local/bin/update-printer-webpage.sh
 
 **The printer appears but prints garbled text or blank pages.**
 - This usually means the wrong driver was auto-selected, often for printers using a proprietary command language (see [Section 9](#9-supported-printers--drivers)).
-- Follow the manual driver configuration steps in [Section 10](#10-manually-configuring-a-driver-unsupported-printers).
+- Follow the manual driver configuration steps in [Section 11](#11-manually-configuring-a-driver-unsupported-printers).
 
 **`unwire.local` or `admin.unwire.local` won't load.**
 - Confirm your device is on the same local network as the Pi.
@@ -267,11 +282,11 @@ sudo /usr/local/bin/update-printer-webpage.sh
 - Run `sudo /usr/local/bin/cups-auto-add.sh` manually and check the log output.
 
 **A manually-configured driver reverted after unplugging/replugging the printer.**
-- This is a known limitation described in [Section 10](#10-manually-configuring-a-driver-unsupported-printers) — repeat the manual configuration steps.
+- This is a known limitation described in [Section 11](#11-manually-configuring-a-driver-unsupported-printers) — repeat the manual configuration steps.
 
 ---
 
-## 15. Uninstalling
+## 16. Uninstalling
 
 ```bash
 sudo systemctl disable --now unwire-scan.timer
@@ -286,6 +301,6 @@ CUPS, Avahi, and Nginx themselves are left installed, since other software on th
 
 ---
 
-## 16. License
+## 17. License
 
 Unwire is released under the MIT License. See [LICENSE](LICENSE) for the full text.
