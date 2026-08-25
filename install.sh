@@ -64,6 +64,7 @@ run_quiet apt-get install -y \
     printer-driver-gutenprint \
     hplip \
     brlaser \
+    printer-driver-splix \
     system-config-printer \
     nginx
 
