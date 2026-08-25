@@ -7,7 +7,7 @@
 
 Turn any USB-only printer into a wireless one with one command.
 
-Unwire is a zero-configuration utility that turns a Raspberry Pi into a wireless **AirPrint hub** for USB printers. Plug a printer into the Pi, and every iPhone, iPad, and Mac on the network can print to it instantly — no drivers, no setup, no app.
+Unwire is a zero-configuration utility that turns a Raspberry Pi into a wireless **AirPrint hub** for USB only printers. Plug a printer into the Pi, and every iPhone, iPad, and Mac on the same network as the Pi can print to it without any additional setup.
 
 ## Quick start
 
@@ -15,14 +15,14 @@ Unwire is a zero-configuration utility that turns a Raspberry Pi into a wireless
 curl -sSL https://raw.githubusercontent.com/jamestheakston/unwire/main/install.sh | sudo bash
 ```
 
-That's it. Unwire installs everything it needs, detects any printers already plugged in, and starts broadcasting them over AirPrint.
+Running this command installs everything it needs, detects any printers already plugged in, and starts broadcasting them over AirPrint.
 
 ## What it does
 
-- **Detects USB printers automatically** — on plug-in via udev, and continuously via a background scan every 30 seconds as a backstop.
-- **Broadcasts AirPrint over the network** using CUPS + Avahi/DNS-SD, with full iOS/macOS-compatible TXT records.
-- **Configures the best available driver** for each printer, in order: IPP Everywhere → matching driver → Gutenprint → raw fallback.
-- **Marks disconnected printers offline** automatically, so the dashboard and AirPrint broadcast always reflect what's actually plugged in.
+- **Detects USB printers automatically**
+- **Broadcasts AirPrint over the network**
+- **Configures the best available driver**
+- **Marks disconnected printers offline**
 - **Serves a live status dashboard** at `http://unwire.local` showing every connected printer.
 - **Proxies CUPS administration** at `http://admin.unwire.local` for advanced configuration.
 
@@ -44,7 +44,7 @@ Recommend: Raspberry Pi 3B+ or Raspberry Pi 4 (1GB)
 
 | Component | Purpose |
 |---|---|
-| `install.sh` | One-shot installer — installs packages, configures CUPS/Nginx/Avahi, and deploys everything below |
+| `install.sh` | Installer — installs packages, configures CUPS/Nginx/Avahi, and deploys everything below |
 | `src/cups-auto-add.sh` | Detects USB printers, creates CUPS queues, generates AirPrint service files |
 | `src/update-printer-webpage.sh` | Regenerates the status dashboard at `/var/www/html/index.html` |
 | `src/99-cups-autorun.rules` | udev rule that triggers instant detection on USB plug-in |
