@@ -28,7 +28,7 @@ That's it. Unwire installs everything it needs, detects any printers already plu
 
 ## Requirements
 
-- Raspberry Pi (or any Debian/Ubuntu-based Linux box) running as root/sudo
+- A supported Raspberry Pi (or any Debian/Ubuntu-based Linux box) running as root/sudo
 - **The Pi must already be connected to the internet** (Wi-Fi or Ethernet) before running the installer — it downloads packages via `apt` during setup
 - One or more USB printers
 - A phone, tablet, or computer on the **same local network** as the Pi, to print and view the dashboard
@@ -36,7 +36,7 @@ That's it. Unwire installs everything it needs, detects any printers already plu
 
 ## Recommended Hardware
 
-Minimum: Raspberry Pi Zero 2 W
+Minimum: Raspberry Pi Zero 2 W <br>
 Recommend: Raspberry Pi 3B+ or Raspberry Pi 4 (1GB)
 
 
