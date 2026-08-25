@@ -29,8 +29,16 @@ That's it. Unwire installs everything it needs, detects any printers already plu
 ## Requirements
 
 - Raspberry Pi (or any Debian/Ubuntu-based Linux box) running as root/sudo
-- Network connectivity (Wi-Fi or Ethernet)
+- **The Pi must already be connected to the internet** (Wi-Fi or Ethernet) before running the installer — it downloads packages via `apt` during setup
 - One or more USB printers
+- A phone, tablet, or computer on the **same local network** as the Pi, to print and view the dashboard
+
+
+## Recommended Hardware
+
+Minimum: Raspberry Pi Zero 2 W
+Recommend: Raspberry Pi 3B+ or Raspberry Pi 4 (1GB)
+
 
 ## How it works
 
@@ -46,13 +54,17 @@ Printers are named `[Printer Name] - Unwire` throughout — in the CUPS queue de
 
 ## Accessing your printers
 
-Once installed, on any Mac or iOS device on the same network:
+Your device must be connected to the **same local network** as the Pi (same Wi-Fi network, or same router) — Unwire only broadcasts on the local network, so it won't be reachable over cellular data or a different Wi-Fi network.
+
+Once connected, on any Mac or iOS device:
 
 1. Open **Print** from any app.
 2. Select **Printer** → your printer should appear as `[Printer Name] - Unwire`.
 3. Print — no drivers or setup required.
 
 ## Dashboard & admin
+
+Open these from a device on the **same local network** as the Pi — they use `.local` addresses, which only resolve on your local network, not over the internet:
 
 - **`http://unwire.local`** — live dashboard showing every connected printer and its status.
 - **`http://admin.unwire.local`** — full CUPS web administration (add printers manually, view queues, manage jobs).
