@@ -37,7 +37,7 @@ Running this command installs everything it needs, detects any printers already 
 ## Recommended Hardware
 
 Minimum: Raspberry Pi Zero 2 W <br>
-Recommend: Raspberry Pi 3B+ or Raspberry Pi 4 (1GB)
+Recommended: Raspberry Pi 3B+ or Raspberry Pi 4 (1GB)
 
 
 ## How it works
