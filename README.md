@@ -52,6 +52,22 @@ Recommended: Raspberry Pi 3B+ or Raspberry Pi 4 (1GB)
 
 Printers are named `[Printer Name] - Unwire` throughout — in the CUPS queue description, the AirPrint broadcast name, and the dashboard — so they're easy to spot in your printer picker.
 
+## Supported printers & drivers
+
+Unwire installs several driver packages to cover as many printers as possible out of the box:
+
+| Package | Covers |
+|---|---|
+| **CUPS (built-in)** | IPP Everywhere / driverless printing — handles most printers made since ~2010, regardless of brand, with no extra driver needed |
+| **`printer-driver-gutenprint`** | Broad general-purpose driver set, especially strong for Epson and Canon inkjets, plus many older/budget printers |
+| **`hplip`** | HP's official driver suite — covers most HP DeskJet, OfficeJet, LaserJet, and Envy printers |
+| **`brlaser`** | Lightweight open-source driver for Brother laser printers (HL-, DCP-, MFC- series) |
+| **`printer-driver-splix`** | Driver for Samsung/Xerox/Dell printers using Samsung's SPL/SPL2/QPDL print language |
+
+`cups-auto-add.sh` tries these in order: IPP Everywhere first, then a matching driver from the packages above, then a generic Gutenprint queue, then a raw queue as a last resort.
+
+**A note on older Samsung SPL printers:** some models (e.g. the Samsung ML-1665) aren't on SpliX's officially supported list, even though the package is installed. These printers may still need you to manually select a PPD from a similar supported model (e.g. ML-1660 or ML-1610) via `http://admin.unwire.local` rather than being auto-configured correctly. If a Samsung laser prints garbled output or nothing at all, this is the most likely cause — check [OpenPrinting's SpliX page](https://www.openprinting.org/driver/SpliX/) for your specific model's support status.
+
 ## Accessing your printers
 
 Your device must be connected to the **same local network** as the Pi (same Wi-Fi network, or same router) — Unwire only broadcasts on the local network, so it won't be reachable over cellular data or a different Wi-Fi network.
