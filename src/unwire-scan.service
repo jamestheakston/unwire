@@ -1,0 +1,8 @@
+[Unit]
+Description=Unwire periodic USB printer scan
+After=cups.service avahi-daemon.service
+Wants=cups.service avahi-daemon.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cups-auto-add.sh
