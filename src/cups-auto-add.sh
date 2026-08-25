@@ -70,6 +70,80 @@ queue_exists() {
 declare -A SEEN_QUEUES=()
 
 # ---------------------------------------------------------------------------
+# find_best_driver <manufacturer> <model>
+#
+# Searches `lpinfo -m` for the best available driver, prioritized by known
+# vendor-specific packages rather than a blind text match. This matters
+# because Unwire installs several driver sources side by side
+# (gutenprint, hplip, brlaser, splix, plus CUPS's own IPP Everywhere and
+# generic PostScript support), and more than one can offer a PPD for the
+# same printer. A blind first-match can pick a technically-valid but
+# lower-quality driver, or one that silently can't function (e.g. an
+# HPLIP entry requiring a proprietary plugin that isn't installed).
+#
+# Echoes the matched driver identifier, or nothing if no match was found.
+# ---------------------------------------------------------------------------
+find_best_driver() {
+    local manufacturer_lc model_lc all_drivers pattern candidate
+    manufacturer_lc="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
+    model_lc="$(echo "$2" | tr '[:upper:]' '[:lower:]')"
+
+    all_drivers="$(lpinfo -m 2>/dev/null)"
+    [[ -z "${all_drivers}" ]] && return 0
+
+    # Brand-specific search patterns, tried in order, before falling back
+    # to a generic text match. Each brand prefers its own dedicated
+    # open-source driver package over a generic one.
+    local -a patterns=()
+
+    case "${manufacturer_lc}" in
+        *brother*)
+            patterns=("brlaser" "brother")
+            ;;
+        *samsung*|*xerox*|*dell*)
+            patterns=("splix" "samsung")
+            ;;
+        *hp*|*hewlett*)
+            patterns=("hplip" "hpcups" "hp-")
+            ;;
+        *epson*)
+            patterns=("gutenprint.*epson" "epson")
+            ;;
+        *canon*)
+            patterns=("gutenprint.*canon" "canon")
+            ;;
+    esac
+
+    # Always fall back to a plain model-name search as the last pattern.
+    patterns+=("${model_lc%% *}")
+
+    for pattern in "${patterns[@]}"; do
+        [[ -z "${pattern}" ]] && continue
+
+        # Read matching lines one at a time so we can skip entries that
+        # require a proprietary plugin we haven't installed (a known
+        # HPLIP failure mode) rather than silently configuring a driver
+        # that will never actually produce output.
+        while IFS= read -r line; do
+            [[ -z "${line}" ]] && continue
+
+            if echo "${line}" | grep -qi "proprietary plugin"; then
+                log "Skipping driver candidate (requires proprietary plugin not installed): ${line}"
+                continue
+            fi
+
+            candidate="$(echo "${line}" | awk '{print $1}')"
+            if [[ -n "${candidate}" ]]; then
+                echo "${candidate}"
+                return 0
+            fi
+        done < <(echo "${all_drivers}" | grep -i -E "${pattern}")
+    done
+
+    return 0
+}
+
+# ---------------------------------------------------------------------------
 # Parse `lpinfo -v` for USB device URIs.
 # Typical line:
 #   direct usb://HP/DeskJet%203630%20series?serial=ABC123
@@ -125,7 +199,11 @@ while IFS= read -r uri; do
         # -------------------------------------------------------------
         # Determine the best driver/PPD, in priority order:
         #   1. IPP Everywhere (driverless)
-        #   2. A matching driver found via `lpinfo -m`
+        #   2. A brand-aware driver match (see find_best_driver) —
+        #      prefers each printer's own vendor-specific package
+        #      (brlaser/splix/hplip/gutenprint) over a blind text match,
+        #      and skips HPLIP entries that require a missing
+        #      proprietary plugin
         #   3. gutenprint generic fallback
         #   4. raw queue as last resort
         # -------------------------------------------------------------
@@ -138,10 +216,7 @@ while IFS= read -r uri; do
         fi
 
         if [[ "${ADD_SUCCESS}" -eq 0 ]]; then
-            MATCHED_DRIVER="$(lpinfo -m 2>/dev/null \
-                | grep -i -F "$(echo "${model_decoded}" | awk '{print $1}')" \
-                | head -n 1 \
-                | awk '{print $1}')"
+            MATCHED_DRIVER="$(find_best_driver "${manufacturer_decoded}" "${model_decoded}")"
 
             if [[ -n "${MATCHED_DRIVER}" ]]; then
                 if lpadmin -p "${queue_name}" -E -v "${uri}" -m "${MATCHED_DRIVER}" \
