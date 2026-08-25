@@ -12,7 +12,7 @@ Unwire is a zero-configuration utility that turns a Raspberry Pi into a wireless
 ## Quick start
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/<you>/unwire/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/jamestheakston/unwire/main/install.sh | sudo bash
 ```
 
 That's it. Unwire installs everything it needs, detects any printers already plugged in, and starts broadcasting them over AirPrint.
