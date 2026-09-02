@@ -63,7 +63,7 @@ run_quiet apt-get install -y \
     avahi-utils \
     printer-driver-gutenprint \
     hplip \
-    brlaser \
+    printer-driver-brlaser \
     printer-driver-splix \
     system-config-printer \
     nginx
